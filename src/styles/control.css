@@ -43,6 +43,46 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* ── TV display toggle ────────────────────────────────────── */
+.tv-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.tv-toggle-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--ctrl-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.tv-toggle-btns {
+  display: flex;
+  border: 1px solid var(--ctrl-border);
+  border-radius: var(--radius-pill);
+  overflow: hidden;
+}
+.tv-toggle-btn {
+  padding: 6px 14px;
+  border: none;
+  background: none;
+  font-size: 0.82rem;
+  font-family: var(--font);
+  font-weight: 500;
+  color: var(--ctrl-text-sec);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+.tv-toggle-btn--active {
+  background: var(--ctrl-text);
+  color: #fff;
+  font-weight: 700;
+}
+.tv-toggle-btn--grocery.tv-toggle-btn--active {
+  background: #16a34a;
+}
+
 /* ── Tab bar ──────────────────────────────────────────────── */
 .tab-bar {
   display: flex;

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { supabase } from '../supabase'
 import '../styles/board.css'
 
@@ -92,6 +93,20 @@ export default function Board() {
   const [items, setItems] = useState([])
   const [connected, setConnected] = useState(false)
   const now = useClock()
+  const navigate = useNavigate()
+
+  // Watch app_state — redirect to /grocery when TV is switched
+  useEffect(() => {
+    supabase.from('app_state').select('active_view').eq('id', 1).single()
+      .then(({ data }) => { if (data?.active_view === 'grocery') navigate('/grocery') })
+
+    const ch = supabase.channel('app_state_board')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_state' }, ({ new: row }) => {
+        if (row.active_view === 'grocery') navigate('/grocery')
+      })
+      .subscribe()
+    return () => supabase.removeChannel(ch)
+  }, [navigate])
 
   const fetchItems = useCallback(async () => {
     const { data } = await supabase

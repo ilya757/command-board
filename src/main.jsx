@@ -4,14 +4,16 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Board from './pages/Board'
 import Control from './pages/Control'
+import Grocery from './pages/Grocery'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/board" element={<Board />} />
-        <Route path="/control" element={<Control />} />
-        <Route path="*" element={<Navigate to="/board" replace />} />
+        <Route path="/board"    element={<Board />} />
+        <Route path="/grocery"  element={<Grocery />} />
+        <Route path="/control"  element={<Control />} />
+        <Route path="*"         element={<Navigate to="/board" replace />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

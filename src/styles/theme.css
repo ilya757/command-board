@@ -2,6 +2,10 @@
    THEME — edit this file to change global colors, fonts, etc.
    ============================================================ */
 
+/* Global reset — removes browser default margins that cause white edges */
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+
 :root {
 
   /* ── Column accent colors ──────────────────────────────── */

@@ -11,7 +11,8 @@
 
 /* ── Page wrapper ─────────────────────────────────────────── */
 .board {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
   background: var(--board-bg);
   color: var(--board-text);
   font-family: var(--font);
@@ -37,11 +38,11 @@
   position: relative;
 }
 
-/* Subtle scanline layer behind the clock */
+/* Subtle scanline layer behind the clock — contained within the clock bounds */
 .board-clock::after {
   content: '';
   position: absolute;
-  inset: -12px -24px;
+  inset: 0;
   background: repeating-linear-gradient(
     0deg,
     rgba(0, 255, 65, 0.025) 0px,

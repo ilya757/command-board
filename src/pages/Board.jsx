@@ -3,10 +3,15 @@ import { supabase } from '../supabase'
 import '../styles/board.css'
 
 const COLUMNS = [
-  { key: 'objectives', label: 'Objectives', accent: '#7b88ff' },
-  { key: 'tasks',      label: 'Tasks',      accent: '#4fd8a4' },
-  { key: 'goals',      label: 'Goals',      accent: '#f9a84d' },
+  { key: 'objectives', label: 'Objectives', accent: '#7b88ff',
+    neon: ['#7b88ff', '#a78bfa', '#3b82f6', '#6d28d9'] },
+  { key: 'tasks',      label: 'Tasks',      accent: '#4fd8a4',
+    neon: ['#4fd8a4', '#34d399', '#06b6d4', '#10b981'] },
+  { key: 'goals',      label: 'Goals',      accent: '#f9a84d',
+    neon: ['#f9a84d', '#f59e0b', '#ef4444', '#f97316'] },
 ]
+
+const randomInterval = () => `${Math.floor(Math.random() * 2000 + 2000)}ms`
 
 // Dynamic — these are colors derived from data, so they stay inline
 const PRIORITY_COLORS = {
@@ -53,11 +58,24 @@ function BoardItem({ item }) {
 
 function Column({ col, items }) {
   const done = items.filter(i => i.done).length
+  const [flickerInterval, setFlickerInterval] = useState(randomInterval)
+
   return (
-    // --col-accent is a CSS variable consumed by board.css for this column's header/title
     <div className="board-column" style={{ '--col-accent': col.accent }}>
       <div className="board-column-header">
-        <span className="board-column-title">{col.label}</span>
+        <span
+          className="board-column-title"
+          style={{
+            '--neon-interval': flickerInterval,
+            '--neon-1': col.neon[0],
+            '--neon-2': col.neon[1],
+            '--neon-3': col.neon[2],
+            '--neon-4': col.neon[3],
+          }}
+          onAnimationIteration={() => setFlickerInterval(randomInterval())}
+        >
+          {col.label}
+        </span>
         <span className="board-column-count">{done}/{items.length}</span>
       </div>
       <div className="board-column-body">

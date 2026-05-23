@@ -181,9 +181,25 @@
 .board-column-title {
   font-size: 1.45rem;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--col-accent);
+  /* Neon glow layers — colors driven by --neon-1..4 set per column */
+  text-shadow:
+    0 0 10px var(--neon-1),
+    0 0 20px var(--neon-2),
+    0 0 40px var(--neon-3),
+    0 0 80px var(--neon-4);
+  filter: saturate(60%);
+  will-change: filter, color;
+  animation: neon-flicker steps(100) var(--neon-interval, 2s) infinite;
+}
+
+@keyframes neon-flicker {
+  50% {
+    color: white;
+    filter: saturate(200%) hue-rotate(20deg);
+  }
 }
 .board-column-count {
   margin-left: auto;

@@ -36,6 +36,7 @@ function PriorityBadge({ priority }) {
 function ChipButton({ label, active, onClick, color }) {
   return (
     <button
+      type="button"
       onClick={onClick}
       style={{
         minHeight: 44,

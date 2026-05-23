@@ -106,7 +106,7 @@ export default function Board() {
       <div className="board-header">
 
         <div className="board-clock">
-          <div className="board-clock-time">{timeStr}</div>
+          <div className="board-clock-time" data-text={timeStr}>{timeStr}</div>
           <div className="board-clock-date">{dateStr}</div>
         </div>
 

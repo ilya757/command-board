@@ -34,18 +34,59 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
 }
+
+/* Subtle scanline layer behind the clock */
+.board-clock::after {
+  content: '';
+  position: absolute;
+  inset: -12px -24px;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 255, 65, 0.025) 0px,
+    rgba(0, 255, 65, 0.025) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+  pointer-events: none;
+  border-radius: 12px;
+  animation: scanlines 8s linear infinite;
+}
+
 .board-clock-time {
   font-size: 3rem;
-  font-weight: 200;
-  letter-spacing: 0.04em;
+  font-weight: 300;
+  letter-spacing: 0.08em;
   font-variant-numeric: tabular-nums;
-  color: #fff;
+  font-family: 'Courier New', Courier, monospace;
+  color: #00ff41;
+  text-shadow:
+    0 0 8px  rgba(0, 255, 65, 0.9),
+    0 0 20px rgba(0, 255, 65, 0.5),
+    0 0 40px rgba(0, 255, 65, 0.2);
+  position: relative;
 }
+
+/* Glitch overlay — reads the time via data-text attribute */
+.board-clock-time::before {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  color: #00ff41;
+  text-shadow: 0 0 6px rgba(0, 255, 65, 0.7);
+  animation: clock-glitch 6s infinite;
+  clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+  opacity: 0;
+}
+
 .board-clock-date {
-  font-size: 1rem;
-  color: var(--board-text-muted);
-  margin-top: 4px;
+  font-size: 0.9rem;
+  color: rgba(0, 255, 65, 0.45);
+  margin-top: 6px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-family: 'Courier New', Courier, monospace;
 }
 
 /* Progress bar */
@@ -218,4 +259,44 @@
   0%   { box-shadow: 0 0 0 0   rgba(74, 222, 128, 0.6); }
   70%  { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
   100% { box-shadow: 0 0 0 0   rgba(74, 222, 128, 0); }
+}
+
+/* Scanlines drift upward slowly behind the clock */
+@keyframes scanlines {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 -80px; }
+}
+
+/* Clock glitch — fires briefly every 6 seconds */
+@keyframes clock-glitch {
+  /* idle most of the time */
+  0%, 88%, 100% {
+    opacity: 0;
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+    transform: translate(0);
+  }
+  /* slice 1 */
+  89% {
+    opacity: 0.85;
+    clip-path: polygon(0 15%, 100% 15%, 100% 35%, 0 35%);
+    transform: translate(-4px, 0);
+  }
+  /* slice 2 */
+  91% {
+    opacity: 0.85;
+    clip-path: polygon(0 60%, 100% 60%, 100% 80%, 0 80%);
+    transform: translate(4px, 0);
+  }
+  /* slice 3 — short full flash */
+  93% {
+    opacity: 0.6;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    transform: translate(-2px, 1px);
+  }
+  /* fade out */
+  95% {
+    opacity: 0;
+    clip-path: polygon(0 0, 100% 0, 100% 0, 0 0);
+    transform: translate(0);
+  }
 }

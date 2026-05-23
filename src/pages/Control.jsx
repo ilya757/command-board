@@ -57,59 +57,136 @@ function ChipButton({ label, active, onClick, color }) {
   )
 }
 
-function ItemRow({ item, onToggle, onDelete }) {
+function ItemRow({ item, onToggle, onDelete, expanded, onExpand, onChangePriority }) {
   return (
     <div style={{
-      display: 'flex',
-      alignItems: 'center',
-      gap: 12,
-      padding: '12px 16px',
       background: '#fff',
       borderRadius: 10,
-      border: '1px solid #e5e7eb',
+      border: expanded ? '1px solid #c7d2fe' : '1px solid #e5e7eb',
       marginBottom: 8,
-      minHeight: 56,
+      overflow: 'hidden',
+      transition: 'border-color 0.15s',
     }}>
-      <input
-        type="checkbox"
-        checked={item.done}
-        onChange={() => onToggle(item)}
-        style={{ width: 20, height: 20, cursor: 'pointer', accentColor: COL_ACCENT[item.column], flexShrink: 0 }}
-      />
-      <span style={{
-        flex: 1,
-        fontSize: '0.97rem',
-        color: item.done ? '#9ca3af' : '#111827',
-        textDecoration: item.done ? 'line-through' : 'none',
-        lineHeight: 1.4,
+      {/* Main row */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 12,
+        padding: '12px 16px',
+        minHeight: 56,
       }}>
-        {item.text}
-      </span>
-      <PriorityBadge priority={item.priority} />
-      <button
-        onClick={() => onDelete(item.id)}
-        aria-label="Delete"
-        style={{
-          minWidth: 36,
-          minHeight: 36,
+        <input
+          type="checkbox"
+          checked={item.done}
+          onChange={() => onToggle(item)}
+          style={{ width: 20, height: 20, cursor: 'pointer', accentColor: COL_ACCENT[item.column], flexShrink: 0 }}
+        />
+        {/* Tappable text area — expands priority editor */}
+        <div
+          onClick={onExpand}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            cursor: 'pointer',
+            minWidth: 0,
+          }}
+        >
+          <span style={{
+            flex: 1,
+            fontSize: '0.97rem',
+            color: item.done ? '#9ca3af' : '#111827',
+            textDecoration: item.done ? 'line-through' : 'none',
+            lineHeight: 1.4,
+          }}>
+            {item.text}
+          </span>
+          <PriorityBadge priority={item.priority} />
+          {/* Chevron */}
+          <svg
+            width="14" height="14" viewBox="0 0 20 20" fill="none"
+            style={{
+              flexShrink: 0,
+              color: '#d1d5db',
+              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              transition: 'transform 0.2s',
+            }}
+          >
+            <path d="M5 7l5 5 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        <button
+          type="button"
+          onClick={() => onDelete(item.id)}
+          aria-label="Delete"
+          style={{
+            minWidth: 36,
+            minHeight: 36,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: '#d1d5db',
+            borderRadius: 8,
+            padding: 4,
+            transition: 'color 0.15s',
+            flexShrink: 0,
+          }}
+          onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
+          onMouseLeave={e => e.currentTarget.style.color = '#d1d5db'}
+        >
+          <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zm-3 6a1 1 0 012 0v5a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v5a1 1 0 11-2 0V8z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+
+      {/* Inline priority editor */}
+      {expanded && (
+        <div style={{
+          borderTop: '1px solid #f3f4f6',
+          padding: '10px 16px 12px',
+          background: '#fafafa',
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: '#d1d5db',
-          borderRadius: 8,
-          padding: 4,
-          transition: 'color 0.15s',
-        }}
-        onMouseEnter={e => e.currentTarget.style.color = '#ef4444'}
-        onMouseLeave={e => e.currentTarget.style.color = '#d1d5db'}
-      >
-        <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
-          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zm-3 6a1 1 0 012 0v5a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v5a1 1 0 11-2 0V8z" clipRule="evenodd" />
-        </svg>
-      </button>
+          gap: 8,
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginRight: 4 }}>
+            Priority:
+          </span>
+          {PRIORITY_OPTS.map(p => {
+            const s = PRIORITY_STYLE[p]
+            const isActive = item.priority === p
+            return (
+              <button
+                key={p}
+                type="button"
+                onClick={() => onChangePriority(item.id, p)}
+                style={{
+                  minHeight: 36,
+                  padding: '0 14px',
+                  borderRadius: 99,
+                  border: isActive ? `2px solid ${s.color}` : '2px solid #e5e7eb',
+                  background: isActive ? s.bg : '#fff',
+                  color: isActive ? s.color : '#6b7280',
+                  fontWeight: isActive ? 700 : 500,
+                  fontSize: '0.82rem',
+                  letterSpacing: '0.04em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {p === 'none' ? 'None' : p}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
@@ -121,6 +198,7 @@ export default function Control() {
   const [col, setCol] = useState('tasks')
   const [priority, setPriority] = useState('none')
   const [adding, setAdding] = useState(false)
+  const [expandedId, setExpandedId] = useState(null)
 
   const fetchItems = useCallback(async () => {
     const { data } = await supabase
@@ -158,6 +236,12 @@ export default function Control() {
 
   const handleDelete = async (id) => {
     await supabase.from('board_items').delete().eq('id', id)
+    setExpandedId(null)
+  }
+
+  const handleChangePriority = async (id, newPriority) => {
+    await supabase.from('board_items').update({ priority: newPriority }).eq('id', id)
+    setExpandedId(null)
   }
 
   const total = items.length
@@ -306,7 +390,15 @@ export default function Control() {
                 <div style={{ color: '#d1d5db', fontSize: '0.9rem', padding: '12px 16px' }}>No items</div>
               ) : (
                 colItems.map(item => (
-                  <ItemRow key={item.id} item={item} onToggle={handleToggle} onDelete={handleDelete} />
+                  <ItemRow
+                    key={item.id}
+                    item={item}
+                    onToggle={handleToggle}
+                    onDelete={handleDelete}
+                    expanded={expandedId === item.id}
+                    onExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                    onChangePriority={handleChangePriority}
+                  />
                 ))
               )}
             </div>

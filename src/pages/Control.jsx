@@ -15,6 +15,14 @@ const PRIORITY_STYLE = {
 }
 const COL_ACCENT = { objectives: '#7b88ff', tasks: '#4fd8a4', goals: '#f9a84d' }
 
+const ASSIGNEE_OPTS = ['unassigned', 'ilya', 'casey', 'both']
+const ASSIGNEE_STYLE = {
+  unassigned: { bg: '#f3f4f6', color: '#6b7280', label: 'None' },
+  ilya:       { bg: '#ede9fe', color: '#7b88ff', label: 'Ilya' },
+  casey:      { bg: '#fef3c7', color: '#d97706', label: 'Casey' },
+  both:       { bg: '#dcfce7', color: '#16a34a', label: 'Both' },
+}
+
 /* ── Small components ─────────────────────────────────────── */
 function PriorityBadge({ priority }) {
   if (!priority || priority === 'none') return null
@@ -40,7 +48,7 @@ function ChipButton({ label, active, onClick, color }) {
   )
 }
 
-function BoardItemRow({ item, onToggle, onDelete, expanded, onExpand, onChangePriority }) {
+function BoardItemRow({ item, onToggle, onDelete, expanded, onExpand, onChangePriority, onChangeAssignee }) {
   return (
     <div className={`item-row${expanded ? ' item-row--expanded' : ''}`}>
       <div className="item-row-main">
@@ -66,18 +74,36 @@ function BoardItemRow({ item, onToggle, onDelete, expanded, onExpand, onChangePr
       </div>
       {expanded && (
         <div className="priority-tray">
-          <span className="priority-tray-label">Priority:</span>
-          {PRIORITY_OPTS.map(p => {
-            const s = PRIORITY_STYLE[p]
-            const isActive = item.priority === p
-            return (
-              <button key={p} type="button" className="priority-chip"
-                style={isActive ? { border: `2px solid ${s.color}`, background: s.bg, color: s.color, fontWeight: 700 } : {}}
-                onClick={() => onChangePriority(item.id, p)}>
-                {p === 'none' ? 'None' : p}
-              </button>
-            )
-          })}
+          {/* Priority row */}
+          <div className="tray-row">
+            <span className="priority-tray-label">Priority:</span>
+            {PRIORITY_OPTS.map(p => {
+              const s = PRIORITY_STYLE[p]
+              const isActive = item.priority === p
+              return (
+                <button key={p} type="button" className="priority-chip"
+                  style={isActive ? { border: `2px solid ${s.color}`, background: s.bg, color: s.color, fontWeight: 700 } : {}}
+                  onClick={() => onChangePriority(item.id, p)}>
+                  {p === 'none' ? 'None' : p}
+                </button>
+              )
+            })}
+          </div>
+          {/* Assignee row */}
+          <div className="tray-row">
+            <span className="priority-tray-label">Assign:</span>
+            {ASSIGNEE_OPTS.map(a => {
+              const s = ASSIGNEE_STYLE[a]
+              const isActive = (item.assignee || 'unassigned') === a
+              return (
+                <button key={a} type="button" className="priority-chip"
+                  style={isActive ? { border: `2px solid ${s.color}`, background: s.bg, color: s.color, fontWeight: 700 } : {}}
+                  onClick={() => onChangeAssignee(item.id, a)}>
+                  {s.label}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>
@@ -125,6 +151,7 @@ export default function Control() {
   const [priority, setPriority]     = useState('none')
   const [adding, setAdding]         = useState(false)
   const [expandedId, setExpandedId] = useState(null)
+  const [assignee, setAssignee]     = useState('unassigned')
 
   // Grocery state
   const [groceryItems, setGroceryItems]     = useState([])
@@ -183,7 +210,7 @@ export default function Control() {
     e.preventDefault()
     if (!text.trim()) return
     setAdding(true)
-    await supabase.from('board_items').insert({ text: text.trim(), column: col, priority })
+    await supabase.from('board_items').insert({ text: text.trim(), column: col, priority, assignee })
     setText('')
     setAdding(false)
   }
@@ -196,6 +223,10 @@ export default function Control() {
   }
   const handleChangePriority = async (id, newPriority) => {
     await supabase.from('board_items').update({ priority: newPriority }).eq('id', id)
+    setExpandedId(null)
+  }
+  const handleChangeAssignee = async (id, newAssignee) => {
+    await supabase.from('board_items').update({ assignee: newAssignee }).eq('id', id)
     setExpandedId(null)
   }
 
@@ -363,6 +394,18 @@ export default function Control() {
                 </div>
               </div>
 
+              <div className="chip-group">
+                <div className="chip-group-label">Assign to</div>
+                <div className="chip-row">
+                  {ASSIGNEE_OPTS.map(a => (
+                    <ChipButton key={a}
+                      label={ASSIGNEE_STYLE[a].label}
+                      active={assignee === a} onClick={() => setAssignee(a)}
+                      color={ASSIGNEE_STYLE[a].color} />
+                  ))}
+                </div>
+              </div>
+
               <button className="submit-btn" type="submit" disabled={adding || !text.trim()}>
                 {adding ? 'Adding…' : 'Add Item'}
               </button>
@@ -385,7 +428,8 @@ export default function Control() {
                           onToggle={handleToggle} onDelete={handleDelete}
                           expanded={expandedId === item.id}
                           onExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
-                          onChangePriority={handleChangePriority} />
+                          onChangePriority={handleChangePriority}
+                          onChangeAssignee={handleChangeAssignee} />
                       ))
                   }
                 </div>

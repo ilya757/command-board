@@ -277,14 +277,26 @@
 .item-row-delete:hover { color: #ef4444; }
 
 /* ── Inline priority tray ─────────────────────────────────── */
+.tray-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+.tray-row + .tray-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--ctrl-border);
+}
+
 .priority-tray {
   border-top: 1px solid var(--ctrl-bg);
   padding: 10px 16px 12px;
   background: #fafafa;
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0;
 }
 .priority-tray-label {
   font-size: 0.72rem;

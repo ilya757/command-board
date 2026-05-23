@@ -21,6 +21,12 @@ const PRIORITY_COLORS = {
   low:  { bg: 'rgba(74,222,128,0.18)',  text: '#4ade80' },
 }
 
+const ASSIGNEE_COLORS = {
+  ilya:  { bg: 'rgba(123,136,255,0.2)', text: '#7b88ff' },
+  casey: { bg: 'rgba(249,168,77,0.2)',  text: '#f9a84d' },
+  both:  { bg: 'rgba(79,216,164,0.2)',  text: '#4fd8a4' },
+}
+
 function useClock() {
   const [now, setNow] = useState(new Date())
   useEffect(() => {
@@ -41,6 +47,17 @@ function PriorityBadge({ priority }) {
   )
 }
 
+function AssigneeBadge({ assignee }) {
+  if (!assignee || assignee === 'unassigned') return null
+  const c = ASSIGNEE_COLORS[assignee]
+  if (!c) return null
+  return (
+    <span className="board-assignee-badge" style={{ background: c.bg, color: c.text }}>
+      {assignee === 'both' ? 'Ilya + Casey' : assignee.charAt(0).toUpperCase() + assignee.slice(1)}
+    </span>
+  )
+}
+
 function BoardItem({ item }) {
   return (
     <div className={`board-item${item.done ? ' board-item--done' : ''}`}>
@@ -52,6 +69,7 @@ function BoardItem({ item }) {
         )}
       </div>
       <span className="board-item-text">{item.text}</span>
+      <AssigneeBadge assignee={item.assignee} />
       <PriorityBadge priority={item.priority} />
     </div>
   )

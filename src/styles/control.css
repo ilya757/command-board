@@ -1,0 +1,297 @@
+/* ============================================================
+   CONTROL — phone control view  (/control)
+   ============================================================ */
+
+/* ── Reset ────────────────────────────────────────────────── */
+.control *, .control *::before, .control *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ── Page wrapper ─────────────────────────────────────────── */
+.control {
+  min-height: 100vh;
+  background: var(--ctrl-bg);
+  font-family: var(--font);
+  color: var(--ctrl-text);
+}
+
+/* ── Sticky header ────────────────────────────────────────── */
+.ctrl-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--ctrl-card);
+  border-bottom: 1px solid var(--ctrl-border);
+  padding: 14px 20px 0;
+}
+.ctrl-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.ctrl-header-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--ctrl-text);
+}
+.ctrl-header-count {
+  font-size: 0.85rem;
+  color: var(--ctrl-text-sec);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Tab bar ──────────────────────────────────────────────── */
+.tab-bar {
+  display: flex;
+  overflow-x: auto;
+}
+.tab-btn {
+  padding: 10px 18px;
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: none;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  font-family: var(--font);
+  color: var(--ctrl-text-sec);
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+/* Active color and border set inline — varies by column accent */
+
+/* ── Body ─────────────────────────────────────────────────── */
+.ctrl-body {
+  padding: 20px 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+/* ── Add item form ────────────────────────────────────────── */
+.add-form {
+  background: var(--ctrl-card);
+  border: 1px solid var(--ctrl-border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  margin-bottom: 24px;
+}
+.add-form-heading {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ctrl-text-sec);
+  margin-bottom: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.add-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 1rem;
+  font-family: var(--font);
+  border: 1px solid var(--ctrl-border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  margin-bottom: 12px;
+  background: var(--ctrl-bg);
+  color: var(--ctrl-text);
+}
+.add-input:focus {
+  border-color: #a5b4fc;
+  background: #fff;
+}
+
+/* Chip selector groups */
+.chip-group {
+  margin-bottom: 10px;
+}
+.chip-group-label {
+  font-size: 0.75rem;
+  color: var(--ctrl-text-muted);
+  margin-bottom: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.chip-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.chip-btn {
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--ctrl-border);
+  background: var(--ctrl-card);
+  color: var(--ctrl-text);
+  font-weight: 500;
+  font-size: 0.9rem;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+/* Active state border/bg/color set inline — driven by which column/priority */
+
+/* Submit button */
+.submit-btn {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 1rem;
+  font-family: var(--font);
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-top: 4px;
+}
+.submit-btn:disabled {
+  background: var(--ctrl-border);
+  color: var(--ctrl-text-muted);
+  cursor: not-allowed;
+}
+.submit-btn:not(:disabled) {
+  background: var(--ctrl-text);   /* dark button */
+  color: #fff;
+}
+
+/* ── Section label (column group header) ──────────────────── */
+.section-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  padding-left: 4px;
+  /* color set inline — uses column accent */
+}
+
+/* ── Item row ─────────────────────────────────────────────── */
+.item-row {
+  background: var(--ctrl-card);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--ctrl-border);
+  margin-bottom: 8px;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+.item-row--expanded {
+  border-color: #c7d2fe;
+}
+
+/* Main row (checkbox + text + delete) */
+.item-row-main {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  min-height: 56px;
+}
+
+/* Tappable body (text + badge + chevron) */
+.item-row-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-width: 0;
+}
+.item-row-text {
+  flex: 1;
+  font-size: 0.97rem;
+  color: var(--ctrl-text);
+  line-height: 1.4;
+}
+.item-row-text--done {
+  color: var(--ctrl-text-muted);
+  text-decoration: line-through;
+}
+.item-row-chevron {
+  flex-shrink: 0;
+  color: var(--ctrl-border);
+  transition: transform 0.2s;
+}
+.item-row-chevron--open {
+  transform: rotate(180deg);
+}
+.item-row-delete {
+  min-width: 36px;
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--ctrl-border);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  transition: color 0.15s;
+  flex-shrink: 0;
+}
+.item-row-delete:hover { color: #ef4444; }
+
+/* ── Inline priority tray ─────────────────────────────────── */
+.priority-tray {
+  border-top: 1px solid var(--ctrl-bg);
+  padding: 10px 16px 12px;
+  background: #fafafa;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.priority-tray-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ctrl-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-right: 4px;
+}
+.priority-chip {
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--radius-pill);
+  border: 2px solid var(--ctrl-border);
+  background: var(--ctrl-card);
+  color: var(--ctrl-text-sec);
+  font-weight: 500;
+  font-size: 0.82rem;
+  font-family: var(--font);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+/* Active priority chip — border/bg/color set inline, driven by priority data */
+
+/* ── Priority badge (control light-mode variant) ──────────── */
+.priority-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 2px 10px;
+  border-radius: var(--radius-pill);
+  text-transform: uppercase;
+  white-space: nowrap;
+  /* background and color set inline — driven by data */
+}
+
+/* ── Empty states ─────────────────────────────────────────── */
+.ctrl-empty {
+  text-align: center;
+  color: var(--ctrl-border);
+  padding: 48px 0;
+  font-size: 0.95rem;
+}
+.ctrl-col-empty {
+  color: #d1d5db;
+  font-size: 0.9rem;
+  padding: 12px 16px;
+}

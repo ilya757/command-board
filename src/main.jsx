@@ -1,0 +1,17 @@
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import Board from './pages/Board'
+import Control from './pages/Control'
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/board" element={<Board />} />
+        <Route path="/control" element={<Control />} />
+        <Route path="*" element={<Navigate to="/board" replace />} />
+      </Routes>
+    </BrowserRouter>
+  </React.StrictMode>
+)

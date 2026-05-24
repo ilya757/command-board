@@ -163,6 +163,14 @@ export default function Control() {
   // TV display state
   const [activeView, setActiveView] = useState('board')
 
+  // Calendar state
+  const [calTokens, setCalTokens]       = useState({})
+  const [googleEvents, setGoogleEvents] = useState({})
+  const [loadingUser, setLoadingUser]   = useState(null)
+  const [selectedIds, setSelectedIds]   = useState(new Set())
+  const [syncing, setSyncing]           = useState(false)
+  const [syncedEvents, setSyncedEvents] = useState([])
+
   /* ── Fetch functions ────────────────────────────────────── */
   const fetchItems = useCallback(async () => {
     const { data } = await supabase.from('board_items').select('*').order('created_at', { ascending: true })
@@ -204,6 +212,33 @@ export default function Control() {
       supabase.removeChannel(stateCh)
     }
   }, [fetchItems, fetchGrocery])
+
+  // Calendar tokens + synced events
+  useEffect(() => {
+    const fetchCalData = async () => {
+      const { data: tokens } = await supabase.from('calendar_tokens').select('*')
+      if (tokens) {
+        const map = {}
+        tokens.forEach(t => { map[t.user_name] = t })
+        setCalTokens(map)
+      }
+      const { data: events } = await supabase.from('calendar_events').select('*').order('start_date')
+      if (events) setSyncedEvents(events)
+    }
+    fetchCalData()
+
+    const tokensCh = supabase.channel('ctrl_cal_tokens')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_tokens' }, fetchCalData)
+      .subscribe()
+    const eventsCh = supabase.channel('ctrl_cal_events')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'calendar_events' }, fetchCalData)
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(tokensCh)
+      supabase.removeChannel(eventsCh)
+    }
+  }, [])
 
   /* ── Board handlers ─────────────────────────────────────── */
   const handleAdd = async (e) => {
@@ -257,6 +292,91 @@ export default function Control() {
     setActiveView(view)
     const { error } = await supabase.from('app_state').update({ active_view: view }).eq('id', 1)
     if (error) console.error('switchView failed:', error)
+  }
+
+  /* ── Calendar helpers ────────────────────────────────────── */
+  const connectCalendar = (userName) => {
+    const params = new URLSearchParams({
+      client_id:     import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      redirect_uri:  `${window.location.origin}/auth/callback`,
+      scope:         'https://www.googleapis.com/auth/calendar.readonly',
+      response_type: 'code',
+      access_type:   'offline',
+      prompt:        'consent',
+      state:         userName,
+    })
+    window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?${params}`
+  }
+
+  const getValidToken = async (userName) => {
+    const { data } = await supabase.from('calendar_tokens')
+      .select('*').eq('user_name', userName).single()
+    if (!data) return null
+
+    if (new Date(data.expires_at) > new Date(Date.now() + 60000))
+      return data.access_token
+
+    const res = await fetch('/api/google-refresh', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh_token: data.refresh_token }),
+    })
+    const refreshed = await res.json()
+    if (refreshed.error) return null
+
+    await supabase.from('calendar_tokens').update({
+      access_token: refreshed.access_token,
+      expires_at:   refreshed.expires_at,
+      updated_at:   new Date().toISOString(),
+    }).eq('user_name', userName)
+
+    return refreshed.access_token
+  }
+
+  const loadEvents = async (userName) => {
+    setLoadingUser(userName)
+    const token = await getValidToken(userName)
+    if (!token) { setLoadingUser(null); return }
+
+    const now    = new Date().toISOString()
+    const future = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    const res = await fetch(
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(now)}&timeMax=${encodeURIComponent(future)}&singleEvents=true&orderBy=startTime&maxResults=30`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    )
+    const data = await res.json()
+    const events = (data.items || []).map(e => ({ ...e, _user: userName }))
+    setGoogleEvents(prev => ({ ...prev, [userName]: events }))
+    setLoadingUser(null)
+  }
+
+  const toggleEvent = (id) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const syncSelected = async () => {
+    setSyncing(true)
+    const allFetched = [...(googleEvents.ilya || []), ...(googleEvents.casey || [])]
+    const rows = allFetched
+      .filter(e => selectedIds.has(e.id))
+      .map(e => ({
+        google_event_id: e.id,
+        user_name:  e._user,
+        title:      e.summary || 'Untitled',
+        start_date: e.start?.date || e.start?.dateTime?.substring(0, 10),
+        all_day:    !!e.start?.date,
+      }))
+    await supabase.from('calendar_events').upsert(rows, { onConflict: 'google_event_id' })
+    setSyncing(false)
+    setSelectedIds(new Set())
+  }
+
+  const removeEvent = async (id) => {
+    await supabase.from('calendar_events').delete().eq('id', id)
   }
 
   /* ── Derived ────────────────────────────────────────────── */
@@ -334,13 +454,99 @@ export default function Control() {
 
         {/* ── CALENDAR TAB ─────────────────────────────────── */}
         {tab === 'calendar' ? (
-          <div className="add-form" style={{ textAlign: 'center', padding: '32px 20px' }}>
-            <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📅</div>
-            <div className="add-form-heading" style={{ marginBottom: 8 }}>No events synced yet</div>
-            <p style={{ color: 'var(--ctrl-text-sec)', fontSize: '0.9rem', lineHeight: 1.55, margin: 0 }}>
-              Google Calendar integration coming soon. Once connected, you'll be able to pick
-              which events show up on the TV display.
-            </p>
+          <div>
+            {['ilya', 'casey'].map(user => (
+              <div key={user} className="add-form" style={{ marginBottom: 16 }}>
+                <div className="add-form-heading" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <span>{user === 'ilya' ? 'Ilya' : 'Casey'}'s Calendar</span>
+                  {calTokens[user] && (
+                    <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: 700 }}>● Connected</span>
+                  )}
+                </div>
+
+                {!calTokens[user] ? (
+                  <button className="submit-btn" style={{ background: '#4285f4' }}
+                    onClick={() => connectCalendar(user)}>
+                    Connect Google Calendar
+                  </button>
+                ) : (
+                  <>
+                    <button className="submit-btn" style={{ marginBottom: 10 }}
+                      disabled={loadingUser === user}
+                      onClick={() => loadEvents(user)}>
+                      {loadingUser === user ? 'Loading…' : 'Load Upcoming Events'}
+                    </button>
+
+                    {(googleEvents[user] || []).length === 0 && loadingUser !== user && (
+                      <div style={{ fontSize: '0.85rem', color: 'var(--ctrl-text-muted)', paddingLeft: 4 }}>
+                        Hit the button to fetch your next 30 days of events.
+                      </div>
+                    )}
+
+                    {(googleEvents[user] || []).map(event => {
+                      const dateStr = event.start?.date || event.start?.dateTime?.substring(0, 10)
+                      const checked = selectedIds.has(event.id)
+                      const alreadySynced = syncedEvents.some(e => e.google_event_id === event.id)
+                      return (
+                        <div key={event.id} className="item-row" style={{ marginBottom: 6, opacity: alreadySynced ? 0.5 : 1 }}>
+                          <div className="item-row-main">
+                            <input type="checkbox" checked={checked}
+                              onChange={() => toggleEvent(event.id)}
+                              style={{ width: 18, height: 18, cursor: 'pointer', accentColor: '#7c3aed', flexShrink: 0 }}
+                            />
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--ctrl-text)' }}>
+                                {event.summary || 'Untitled'}
+                              </div>
+                              <div style={{ fontSize: '0.75rem', color: 'var(--ctrl-text-muted)' }}>
+                                {dateStr}{alreadySynced ? ' · synced' : ''}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </>
+                )}
+              </div>
+            ))}
+
+            {selectedIds.size > 0 && (
+              <button className="submit-btn" disabled={syncing}
+                style={{ background: '#7c3aed', marginBottom: 24 }}
+                onClick={syncSelected}>
+                {syncing ? 'Syncing…' : `Sync ${selectedIds.size} event${selectedIds.size !== 1 ? 's' : ''} to board`}
+              </button>
+            )}
+
+            {syncedEvents.length > 0 && (
+              <div>
+                <div className="section-label" style={{ color: '#7c3aed', marginBottom: 10 }}>
+                  On the calendar · {syncedEvents.length}
+                </div>
+                {syncedEvents.map(event => (
+                  <div key={event.id} className="item-row" style={{ marginBottom: 6 }}>
+                    <div className="item-row-main">
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 500 }}>{event.title}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--ctrl-text-muted)' }}>
+                          {event.start_date} · {event.user_name}
+                        </div>
+                      </div>
+                      <button type="button" className="item-row-delete" onClick={() => removeEvent(event.id)}>
+                        <svg width="18" height="18" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zm-3 6a1 1 0 012 0v5a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v5a1 1 0 11-2 0V8z" clipRule="evenodd"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {syncedEvents.length === 0 && selectedIds.size === 0 && !Object.values(googleEvents).some(a => a.length > 0) && (
+              <div className="ctrl-empty">Connect a calendar above to get started</div>
+            )}
           </div>
 
         ) : tab === 'grocery' ? (

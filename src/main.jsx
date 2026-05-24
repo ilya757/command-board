@@ -6,16 +6,18 @@ import Board from './pages/Board'
 import Control from './pages/Control'
 import Grocery from './pages/Grocery'
 import Calendar from './pages/Calendar'
+import AuthCallback from './pages/AuthCallback'
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <BrowserRouter>
       <Routes>
-        <Route path="/board"    element={<Board />} />
-        <Route path="/grocery"  element={<Grocery />} />
-        <Route path="/calendar" element={<Calendar />} />
-        <Route path="/control"  element={<Control />} />
-        <Route path="*"         element={<Navigate to="/board" replace />} />
+        <Route path="/board"         element={<Board />} />
+        <Route path="/grocery"       element={<Grocery />} />
+        <Route path="/calendar"      element={<Calendar />} />
+        <Route path="/control"       element={<Control />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
+        <Route path="*"              element={<Navigate to="/board" replace />} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

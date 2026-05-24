@@ -46,6 +46,6 @@ html, body { margin: 0; padding: 0; }
   --radius-pill: 99px;
 
   /* ── Typography ─────────────────────────────────────────── */
-  --font: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font: 'Martel Sans', system-ui, -apple-system, sans-serif;
 
 }

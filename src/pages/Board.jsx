@@ -116,11 +116,15 @@ export default function Board() {
   // Watch app_state — redirect to /grocery when TV is switched
   useEffect(() => {
     supabase.from('app_state').select('active_view').eq('id', 1).single()
-      .then(({ data }) => { if (data?.active_view === 'grocery') navigate('/grocery') })
+      .then(({ data }) => {
+        if (data?.active_view === 'grocery')  navigate('/grocery')
+        if (data?.active_view === 'calendar') navigate('/calendar')
+      })
 
     const ch = supabase.channel('app_state_board')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_state' }, ({ new: row }) => {
-        if (row.active_view === 'grocery') navigate('/grocery')
+        if (row.active_view === 'grocery')  navigate('/grocery')
+        if (row.active_view === 'calendar') navigate('/calendar')
       })
       .subscribe()
     return () => supabase.removeChannel(ch)

@@ -115,6 +115,9 @@
 .tv-toggle-btn--grocery.tv-toggle-btn--active {
   background: #16a34a;
 }
+.tv-toggle-btn--calendar.tv-toggle-btn--active {
+  background: #7c3aed;
+}
 
 /* ── Tab bar ──────────────────────────────────────────────── */
 .tab-bar {

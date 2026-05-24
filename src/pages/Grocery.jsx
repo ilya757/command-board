@@ -37,11 +37,15 @@ export default function Grocery() {
 
     // Realtime — app_state: switch back to board when toggled
     supabase.from('app_state').select('active_view').eq('id', 1).single()
-      .then(({ data }) => { if (data?.active_view === 'board') navigate('/board') })
+      .then(({ data }) => {
+        if (data?.active_view === 'board')    navigate('/board')
+        if (data?.active_view === 'calendar') navigate('/calendar')
+      })
 
     const stateCh = supabase.channel('app_state_grocery')
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'app_state' }, ({ new: row }) => {
-        if (row.active_view === 'board') navigate('/board')
+        if (row.active_view === 'board')    navigate('/board')
+        if (row.active_view === 'calendar') navigate('/calendar')
       })
       .subscribe()
 

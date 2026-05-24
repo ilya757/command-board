@@ -255,7 +255,8 @@ export default function Control() {
   /* ── TV switcher ────────────────────────────────────────── */
   const switchView = async (view) => {
     setActiveView(view)
-    await supabase.from('app_state').update({ active_view: view }).eq('id', 1)
+    const { error } = await supabase.from('app_state').update({ active_view: view }).eq('id', 1)
+    if (error) console.error('switchView failed:', error)
   }
 
   /* ── Derived ────────────────────────────────────────────── */
@@ -293,23 +294,36 @@ export default function Control() {
               >
                 🛒 Grocery
               </button>
+              <button
+                type="button"
+                className={`tv-toggle-btn${activeView === 'calendar' ? ' tv-toggle-btn--active tv-toggle-btn--calendar' : ''}`}
+                onClick={() => switchView('calendar')}
+              >
+                📅 Calendar
+              </button>
             </div>
           </div>
 
           <span className="ctrl-header-count">
-            {tab === 'grocery' ? `${groceryDone}/${groceryTotal}` : `${done}/${total}`} done
+            {tab !== 'calendar' && `${tab === 'grocery' ? `${groceryDone}/${groceryTotal}` : `${done}/${total}`} done`}
           </span>
         </div>
 
         {/* Tab bar */}
         <div className="tab-bar">
-          {['all', ...BOARD_COLS, 'grocery'].map(t => {
+          {['all', ...BOARD_COLS, 'grocery', 'calendar'].map(t => {
             const isActive = tab === t
-            const color = t === 'all' ? '#111827' : t === 'grocery' ? '#16a34a' : COL_ACCENT[t]
+            const color = t === 'all' ? '#111827'
+              : t === 'grocery'  ? '#16a34a'
+              : t === 'calendar' ? '#7c3aed'
+              : COL_ACCENT[t]
             return (
               <button key={t} className="tab-btn" onClick={() => setTab(t)}
                 style={isActive ? { fontWeight: 700, color, borderBottomColor: color } : {}}>
-                {t === 'all' ? 'All' : t === 'grocery' ? '🛒 Grocery' : COL_LABELS[t]}
+                {t === 'all' ? 'All'
+                  : t === 'grocery'  ? '🛒 Grocery'
+                  : t === 'calendar' ? '📅 Calendar'
+                  : COL_LABELS[t]}
               </button>
             )
           })}
@@ -318,8 +332,19 @@ export default function Control() {
 
       <div className="ctrl-body">
 
-        {/* ── GROCERY TAB ──────────────────────────────────── */}
-        {tab === 'grocery' ? (
+        {/* ── CALENDAR TAB ─────────────────────────────────── */}
+        {tab === 'calendar' ? (
+          <div className="add-form" style={{ textAlign: 'center', padding: '32px 20px' }}>
+            <div style={{ fontSize: '2.5rem', marginBottom: 12 }}>📅</div>
+            <div className="add-form-heading" style={{ marginBottom: 8 }}>No events synced yet</div>
+            <p style={{ color: 'var(--ctrl-text-sec)', fontSize: '0.9rem', lineHeight: 1.55, margin: 0 }}>
+              Google Calendar integration coming soon. Once connected, you'll be able to pick
+              which events show up on the TV display.
+            </p>
+          </div>
+
+        ) : tab === 'grocery' ? (
+        /* ── GROCERY TAB ──────────────────────────────────── */
           <>
             <form className="add-form" onSubmit={handleAddGrocery}>
               <div className="add-form-heading">Add Grocery Item</div>
